@@ -1,12 +1,32 @@
 const audio = document.querySelector('#tribute-audio');
 const audioDock = document.querySelector('.audio-dock');
 const audioStatus = document.querySelector('#audio-status');
+const audioProgress = document.querySelector('#audio-progress');
+const audioCurrentTime = document.querySelector('#audio-current-time');
+const audioDuration = document.querySelector('#audio-duration');
 const audioButtons = [...document.querySelectorAll('[data-audio-toggle]')];
 const galleryDialog = document.querySelector('#gallery-dialog');
 const dialogImage = document.querySelector('[data-dialog-image]');
 const dialogClose = document.querySelector('[data-dialog-close]');
 
 document.body.classList.add('reveal-enabled');
+
+function formatAudioTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${remainder}`;
+}
+
+function updateAudioProgress() {
+  if (!audio) return;
+  if (audioProgress && Number.isFinite(audio.duration)) {
+    audioProgress.max = String(audio.duration);
+    audioProgress.value = String(audio.currentTime);
+  }
+  if (audioCurrentTime) audioCurrentTime.textContent = formatAudioTime(audio.currentTime);
+  if (audioDuration) audioDuration.textContent = formatAudioTime(audio.duration);
+}
 
 function setAudioState(isPlaying) {
   audioButtons.forEach((button) => {
@@ -52,6 +72,14 @@ audioButtons.forEach((button) => button.addEventListener('click', toggleAudio));
 audio?.addEventListener('play', () => setAudioState(true));
 audio?.addEventListener('pause', () => setAudioState(false));
 audio?.addEventListener('ended', () => setAudioState(false));
+audio?.addEventListener('loadedmetadata', updateAudioProgress);
+audio?.addEventListener('durationchange', updateAudioProgress);
+audio?.addEventListener('timeupdate', updateAudioProgress);
+audioProgress?.addEventListener('input', () => {
+  if (!audio) return;
+  audio.currentTime = Number(audioProgress.value);
+  updateAudioProgress();
+});
 
 const revealItems = [...document.querySelectorAll('[data-reveal]')];
 
@@ -108,3 +136,4 @@ galleryDialog?.addEventListener('click', (event) => {
 });
 
 setAudioState(false);
+updateAudioProgress();

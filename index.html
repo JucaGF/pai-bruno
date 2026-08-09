@@ -59,8 +59,12 @@
             <img src="assets/pai-bruno.jpg" alt="Pai Bruno sorrindo, segurando uma foto do Yellowar e uma imagem de Santo Inácio." />
             <figcaption>Um coração que soube estar presente.</figcaption>
           </figure>
+          <figure class="paper-photo paper-photo--group">
+            <img src="assets/yellowar-grupo.jpg" alt="Todo o círculo Yellowar reunido no encontro." />
+            <figcaption>todo mundo do Yellowar</figcaption>
+          </figure>
           <figure class="paper-photo paper-photo--poster">
-            <img src="assets/cartaz-yellowar.jpg" alt="Cartaz amarelo desenhado pelo círculo Yellowar." />
+            <span class="poster-art"><img src="assets/cartaz-yellowar.jpg" alt="Cartaz amarelo desenhado pelo círculo Yellowar." /></span>
             <figcaption>Yellowar, em cor e traço.</figcaption>
           </figure>
           <div class="collage-label label--date">11.07.25</div>
@@ -193,8 +197,21 @@
       <div class="audio-dock__pulse" aria-hidden="true"></div>
       <div class="audio-dock__copy">
         <span class="audio-dock__eyebrow">A nossa trilha</span>
-        <strong>Yellowar em movimento</strong>
+        <strong>Agora te Vejo - banda EJC</strong>
         <span id="audio-status" aria-live="polite">Pronta para tocar</span>
+        <div class="audio-progress">
+          <span class="audio-time" id="audio-current-time">0:00</span>
+          <input
+            id="audio-progress"
+            type="range"
+            min="0"
+            max="0"
+            step="0.1"
+            value="0"
+            aria-label="Escolher o momento da música"
+          />
+          <span class="audio-time" id="audio-duration">0:00</span>
+        </div>
       </div>
       <button class="audio-button audio-button--dock" type="button" data-audio-toggle aria-pressed="false">
         <span class="audio-icon" aria-hidden="true">▶</span>
