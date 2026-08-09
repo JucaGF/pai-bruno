@@ -808,6 +808,154 @@ h2 {
   padding: 30px 0 140px;
 }
 
+.gallery-preview {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  width: 100vw;
+  max-height: 410px;
+  margin: 42px calc(50% - 50vw) 28px;
+  overflow: hidden;
+  padding: 14px 0;
+  opacity: 1;
+  transition: max-height 500ms ease, margin 500ms ease, padding 500ms ease, opacity 320ms ease;
+}
+
+.gallery-preview::before,
+.gallery-preview::after {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: min(12vw, 130px);
+  content: '';
+  pointer-events: none;
+}
+
+.gallery-preview::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--paper) 0%, transparent 100%);
+}
+
+.gallery-preview::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--paper) 0%, transparent 100%);
+}
+
+.gallery-track {
+  display: flex;
+  width: max-content;
+  gap: 14px;
+  animation: gallery-marquee 58s linear infinite;
+  will-change: transform;
+}
+
+.gallery-track--reverse {
+  animation-direction: reverse;
+  animation-duration: 66s;
+}
+
+.gallery-preview:hover .gallery-track,
+.gallery-preview:focus .gallery-track {
+  animation-play-state: paused;
+}
+
+.gallery-marquee-item {
+  flex: 0 0 clamp(150px, 16vw, 235px);
+  aspect-ratio: 4 / 3;
+  padding: 7px;
+  background: var(--white);
+  box-shadow: 0 9px 20px rgba(74, 42, 14, 0.14);
+  transform: rotate(-1.2deg);
+}
+
+.gallery-marquee-item:nth-child(4n) {
+  transform: rotate(1.4deg);
+}
+
+.gallery-marquee-item:nth-child(7n) {
+  transform: rotate(-2deg);
+}
+
+.gallery-marquee-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes gallery-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.gallery-toggle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 auto 42px;
+  padding: 13px 19px 12px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--yellow);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.gallery-toggle:hover,
+.gallery-toggle:focus-visible {
+  box-shadow: 5px 5px 0 var(--ink);
+  outline: none;
+  transform: translate(-2px, -2px);
+}
+
+.gallery-toggle-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.gallery--interactive .gallery-grid {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px);
+  transition: max-height 700ms ease, opacity 300ms ease, transform 500ms ease;
+  visibility: hidden;
+}
+
+.gallery--interactive.gallery--expanded .gallery-preview {
+  max-height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-block: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gallery--interactive.gallery--expanded .gallery-grid {
+  max-height: 19000px;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  visibility: visible;
+}
+
 .gallery-grid {
   display: grid;
   grid-template-columns: 1fr 1.2fr 0.8fr 1fr;
@@ -1177,6 +1325,10 @@ body.reveal-enabled [data-reveal].is-visible {
     grid-template-columns: repeat(3, 1fr);
   }
 
+  .gallery-marquee-item {
+    flex-basis: clamp(135px, 20vw, 190px);
+  }
+
   .gallery-item--landscape,
   .gallery-item--last {
     grid-column: span 2;
@@ -1387,6 +1539,27 @@ body.reveal-enabled [data-reveal].is-visible {
     gap: 12px;
   }
 
+  .gallery-preview {
+    gap: 9px;
+    margin-top: 28px;
+    margin-bottom: 24px;
+    padding-block: 9px;
+  }
+
+  .gallery-track {
+    gap: 9px;
+  }
+
+  .gallery-marquee-item {
+    flex-basis: 118px;
+    padding: 5px;
+  }
+
+  .gallery-toggle {
+    margin-bottom: 34px;
+    font-size: 0.92rem;
+  }
+
   .gallery-item {
     border-width: 6px;
   }
@@ -1465,5 +1638,10 @@ body.reveal-enabled [data-reveal].is-visible {
   body.reveal-enabled [data-reveal] {
     opacity: 1;
     transform: none;
+  }
+
+  .gallery-track {
+    animation: none !important;
+    transform: none !important;
   }
 }

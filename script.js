@@ -8,6 +8,12 @@ const audioButtons = [...document.querySelectorAll('[data-audio-toggle]')];
 const galleryDialog = document.querySelector('#gallery-dialog');
 const dialogImage = document.querySelector('[data-dialog-image]');
 const dialogClose = document.querySelector('[data-dialog-close]');
+const gallery = document.querySelector('.gallery');
+const galleryPreview = document.querySelector('[data-gallery-preview]');
+const galleryGrid = document.querySelector('[data-gallery-grid]');
+const galleryToggle = document.querySelector('[data-gallery-toggle]');
+const galleryToggleLabel = document.querySelector('[data-gallery-toggle-label]');
+const galleryTracks = [...document.querySelectorAll('[data-gallery-track]')];
 
 document.body.classList.add('reveal-enabled');
 
@@ -99,6 +105,61 @@ if ('IntersectionObserver' in window) {
 } else {
   revealItems.forEach((item) => item.classList.add('is-visible'));
 }
+
+function buildGalleryTrack(track, galleryItems) {
+  const cards = document.createDocumentFragment();
+
+  [...galleryItems, ...galleryItems].forEach((galleryItem) => {
+    const sourceImage = galleryItem.querySelector('img');
+    if (!sourceImage) return;
+
+    const card = document.createElement('span');
+    card.className = 'gallery-marquee-item';
+    card.setAttribute('aria-hidden', 'true');
+
+    const image = document.createElement('img');
+    image.src = sourceImage.getAttribute('src') || sourceImage.src;
+    image.alt = '';
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    card.append(image);
+    cards.append(card);
+  });
+
+  track.replaceChildren(cards);
+}
+
+function initializeGallery() {
+  if (!gallery || !galleryPreview || !galleryGrid || !galleryToggle || !galleryToggleLabel || galleryTracks.length !== 2) {
+    return;
+  }
+
+  const galleryItems = [...galleryGrid.querySelectorAll('[data-gallery-image]')];
+  if (!galleryItems.length) return;
+
+  galleryTracks.forEach((track) => buildGalleryTrack(track, galleryItems));
+  gallery.classList.add('gallery--interactive');
+
+  let expanded = false;
+
+  function setGalleryExpanded(nextExpanded) {
+    expanded = nextExpanded;
+    gallery.classList.toggle('gallery--expanded', expanded);
+    galleryToggle.setAttribute('aria-expanded', String(expanded));
+    galleryGrid.setAttribute('aria-hidden', String(!expanded));
+    galleryGrid.inert = !expanded;
+    galleryToggleLabel.textContent = expanded ? 'Recolher galeria' : 'Ver todas as fotos';
+
+    if (expanded) {
+      galleryItems.forEach((item) => item.classList.add('is-visible'));
+    }
+  }
+
+  galleryToggle.addEventListener('click', () => setGalleryExpanded(!expanded));
+  setGalleryExpanded(false);
+}
+
+initializeGallery();
 
 let lastGalleryTrigger = null;
 
