@@ -817,7 +817,6 @@ h2 {
   margin: 42px calc(50% - 50vw) 28px;
   overflow: hidden;
   padding: 14px 0;
-  background: var(--yellow);
   opacity: 1;
   transition: max-height 500ms ease, margin 500ms ease, padding 500ms ease, opacity 320ms ease;
 }
@@ -835,12 +834,12 @@ h2 {
 
 .gallery-preview::before {
   left: 0;
-  background: linear-gradient(90deg, var(--yellow) 0%, transparent 100%);
+  background: linear-gradient(90deg, var(--paper) 0%, transparent 100%);
 }
 
 .gallery-preview::after {
   right: 0;
-  background: linear-gradient(270deg, var(--yellow) 0%, transparent 100%);
+  background: linear-gradient(270deg, var(--paper) 0%, transparent 100%);
 }
 
 .gallery-track {
@@ -1059,6 +1058,8 @@ h2 {
 .closing {
   position: relative;
   display: grid;
+  width: 100%;
+  margin: 0;
   place-items: center;
   min-height: 630px;
   padding: 100px 0 170px;
