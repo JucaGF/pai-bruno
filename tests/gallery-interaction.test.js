@@ -17,5 +17,6 @@ assert.match(css, /prefers-reduced-motion:\s*reduce/);
 assert.match(js, /gallery--expanded/);
 assert.match(js, /aria-hidden/);
 assert.match(js, /inert/);
+assert.doesNotMatch(html, /^\+\s+<button class="gallery-item gallery-item--archive"/m);
 
 console.log('gallery interaction contract checks passed');
