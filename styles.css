@@ -373,15 +373,16 @@ h2 em {
 
 .paper-photo--hero figcaption {
   right: 17px;
-  left: 48%;
+  left: 58%;
+  font-size: 0.61rem;
   text-align: right;
 }
 
 .paper-photo--group {
-  top: 62px;
-  left: 0;
-  z-index: 1;
-  width: min(260px, 45%);
+  top: 28px;
+  left: -2%;
+  z-index: 3;
+  width: min(245px, 42%);
   aspect-ratio: 4 / 3;
   padding: 9px 9px 29px;
   transform: rotate(-7deg);
@@ -413,7 +414,8 @@ h2 em {
 }
 
 .poster-art img {
-  transform: rotate(90deg) scale(1.16);
+  object-position: center;
+  transform: none;
 }
 
 .paper-photo--poster figcaption {
