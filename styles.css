@@ -846,13 +846,13 @@ h2 {
   display: flex;
   width: max-content;
   gap: 14px;
-  animation: gallery-marquee 58s linear infinite;
+  animation: gallery-marquee 90s linear infinite;
   will-change: transform;
 }
 
 .gallery-track--reverse {
   animation-direction: reverse;
-  animation-duration: 66s;
+  animation-duration: 105s;
 }
 
 .gallery-preview:hover .gallery-track,
