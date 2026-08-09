@@ -13,6 +13,7 @@ assert.match(html, /aria-expanded="false"/);
 assert.match(html, /id="gallery-grid"/);
 assert.match(css, /@keyframes gallery-marquee/);
 assert.match(css, /gallery-preview[\s\S]*?100vw/);
+assert.match(css, /\.gallery-preview\s*\{[^}]*background:\s*var\(--yellow\)/);
 assert.match(css, /animation:\s*gallery-marquee\s+150s\s+linear\s+infinite/);
 assert.match(css, /animation-duration:\s*180s/);
 assert.match(css, /prefers-reduced-motion:\s*reduce/);
