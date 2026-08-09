@@ -876,6 +876,24 @@ h2 {
   transform: rotate(1deg);
 }
 
+.gallery-item--archive {
+  grid-row: span 2;
+  transform: rotate(-0.8deg);
+}
+
+.gallery-item--archive:nth-child(3n) {
+  transform: rotate(1.3deg);
+}
+
+.gallery-item--archive:nth-child(4n) {
+  transform: rotate(-1.6deg);
+}
+
+.gallery-item--archive-wide {
+  grid-column: span 2;
+  transform: rotate(0.8deg);
+}
+
 .gallery-caption {
   position: absolute;
   right: 12px;
@@ -1386,6 +1404,12 @@ body.reveal-enabled [data-reveal].is-visible {
   }
 
   .gallery-item--square {
+    grid-row: span 2;
+  }
+
+  .gallery-item--archive,
+  .gallery-item--archive-wide {
+    grid-column: span 1;
     grid-row: span 2;
   }
 
