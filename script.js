@@ -198,7 +198,8 @@ function initializeGallery() {
   const previewItems = galleryItems.slice(0, 8);
   galleryTracks.forEach((track) => buildGalleryTrack(track, previewItems));
   gallery.classList.add('gallery--interactive');
-  enableGallerySwipe();
+  const isMobileViewport = window.matchMedia?.('(max-width: 700px)').matches;
+  if (!isMobileViewport) enableGallerySwipe();
 
   let expanded = false;
 
