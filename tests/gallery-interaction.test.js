@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const html = fs.readFileSync('index.html', 'utf8');
 const css = fs.readFileSync('styles.css', 'utf8');
 const js = fs.readFileSync('script.js', 'utf8');
+const gallerySection = html.match(/<section class="gallery[\s\S]*?<\/section>/)?.[0] || '';
 
 assert.match(html, /data-gallery-preview/);
 assert.match(html, /data-gallery-track="forward"/);
@@ -17,10 +18,22 @@ assert.doesNotMatch(css, /\.gallery-preview\s*\{[^}]*background:\s*var\(--yellow
 assert.match(css, /\.closing\s*\{[^}]*width:\s*100%/);
 assert.match(css, /animation:\s*gallery-marquee\s+150s\s+linear\s+infinite/);
 assert.match(css, /animation-duration:\s*180s/);
+assert.match(css, /\.gallery-preview\s*\{[\s\S]*?touch-action:\s*pan-y/);
+assert.match(css, /\.gallery-preview:focus-visible \.gallery-track/);
+assert.doesNotMatch(css, /\.gallery-preview:focus \.gallery-track/);
+assert.match(js, /pointerdown/);
+assert.match(js, /pointermove/);
+assert.match(js, /pointerup/);
 assert.match(css, /prefers-reduced-motion:\s*reduce/);
 assert.match(js, /gallery--expanded/);
 assert.match(js, /aria-hidden/);
 assert.match(js, /inert/);
+assert.doesNotMatch(js, /image\.loading\s*=\s*['"]lazy['"]/);
+assert.doesNotMatch(html, /<span class="gallery-caption">/);
+assert.doesNotMatch(gallerySection, /<p class="section-description">/);
+assert.doesNotMatch(gallerySection, /<img[^>]+alt="[^"]+"/);
+assert.doesNotMatch(gallerySection, /registro/i);
+assert.match(css, /\.gallery-grid\s*\{[\s\S]*?grid-auto-flow:\s*dense/);
 assert.doesNotMatch(html, /^\+\s+<button class="gallery-item gallery-item--archive"/m);
 
 console.log('gallery interaction contract checks passed');

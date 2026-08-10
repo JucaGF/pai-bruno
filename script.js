@@ -120,13 +120,71 @@ function buildGalleryTrack(track, galleryItems) {
     const image = document.createElement('img');
     image.src = sourceImage.getAttribute('src') || sourceImage.src;
     image.alt = '';
-    image.loading = 'lazy';
     image.decoding = 'async';
     card.append(image);
     cards.append(card);
   });
 
   track.replaceChildren(cards);
+}
+
+function enableGallerySwipe() {
+  let pointerId = null;
+  let startX = 0;
+  let startY = 0;
+  let committedOffset = 0;
+  let isHorizontalGesture = false;
+
+  function setTrackOffset(offset) {
+    galleryTracks.forEach((track) => {
+      track.style.setProperty('--gallery-drag-offset', `${offset}px`);
+    });
+  }
+
+  function finishPointer(event) {
+    if (pointerId !== event.pointerId) return;
+
+    if (isHorizontalGesture) {
+      committedOffset += event.clientX - startX;
+      setTrackOffset(committedOffset);
+    }
+
+    galleryPreview.classList.remove('is-dragging');
+    if (galleryPreview.hasPointerCapture?.(pointerId)) {
+      galleryPreview.releasePointerCapture(pointerId);
+    }
+    pointerId = null;
+    isHorizontalGesture = false;
+  }
+
+  galleryPreview.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startY = event.clientY;
+    isHorizontalGesture = false;
+    galleryPreview.setPointerCapture?.(pointerId);
+  });
+
+  galleryPreview.addEventListener('pointermove', (event) => {
+    if (pointerId !== event.pointerId) return;
+
+    const deltaX = event.clientX - startX;
+    const deltaY = event.clientY - startY;
+
+    if (!isHorizontalGesture) {
+      if (Math.abs(deltaY) > Math.abs(deltaX) || Math.abs(deltaX) < 8) return;
+      isHorizontalGesture = true;
+      galleryPreview.classList.add('is-dragging');
+    }
+
+    event.preventDefault();
+    setTrackOffset(committedOffset + deltaX);
+  });
+
+  galleryPreview.addEventListener('pointerup', finishPointer);
+  galleryPreview.addEventListener('pointercancel', finishPointer);
 }
 
 function initializeGallery() {
@@ -139,6 +197,7 @@ function initializeGallery() {
 
   galleryTracks.forEach((track) => buildGalleryTrack(track, galleryItems));
   gallery.classList.add('gallery--interactive');
+  enableGallerySwipe();
 
   let expanded = false;
 

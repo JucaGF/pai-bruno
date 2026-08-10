@@ -797,11 +797,16 @@ h2 {
   position: absolute;
   right: 28px;
   bottom: 23px;
-  left: 28px;
+  left: auto;
+  max-width: calc(100% - 56px);
+  padding: 7px 12px 6px;
+  background: rgba(255, 211, 0, 0.94);
+  border-radius: 3px;
   color: var(--ink);
   font-family: var(--display);
   font-size: 1.1rem;
   text-align: right;
+  box-shadow: 0 2px 0 rgba(56, 35, 23, 0.14);
 }
 
 .gallery {
@@ -818,6 +823,7 @@ h2 {
   overflow: hidden;
   padding: 14px 0;
   opacity: 1;
+  touch-action: pan-y;
   transition: max-height 500ms ease, margin 500ms ease, padding 500ms ease, opacity 320ms ease;
 }
 
@@ -847,6 +853,7 @@ h2 {
   width: max-content;
   gap: 14px;
   animation: gallery-marquee 150s linear infinite;
+  translate: var(--gallery-drag-offset, 0px) 0;
   will-change: transform;
 }
 
@@ -856,7 +863,8 @@ h2 {
 }
 
 .gallery-preview:hover .gallery-track,
-.gallery-preview:focus .gallery-track {
+.gallery-preview:focus-visible .gallery-track,
+.gallery-preview.is-dragging .gallery-track {
   animation-play-state: paused;
 }
 
@@ -959,7 +967,8 @@ h2 {
 .gallery-grid {
   display: grid;
   grid-template-columns: 1fr 1.2fr 0.8fr 1fr;
-  grid-auto-rows: 180px;
+  grid-auto-flow: dense;
+  grid-auto-rows: 150px;
   gap: 18px;
 }
 
@@ -1044,17 +1053,6 @@ h2 {
   transform: rotate(0.8deg);
 }
 
-.gallery-caption {
-  position: absolute;
-  right: 12px;
-  bottom: 11px;
-  left: 12px;
-  color: var(--white);
-  font-family: var(--display);
-  font-size: 0.9rem;
-  text-shadow: 0 1px 9px rgba(0, 0, 0, 0.6);
-}
-
 .closing {
   position: relative;
   display: grid;
@@ -1127,6 +1125,58 @@ h2 {
 .closing-doodles span:nth-child(2) {
   color: var(--paper);
   transform: translateY(12px) rotate(8deg);
+}
+
+.closing-ornaments {
+  position: absolute;
+  right: 15%;
+  bottom: 50px;
+  left: 13%;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(125, 95, 0, 0.78);
+  pointer-events: none;
+}
+
+.closing-ornament {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  font-family: var(--display);
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.closing-ornament--heart {
+  color: rgba(255, 248, 229, 0.9);
+  font-size: 2rem;
+  transform: translateY(16px) rotate(-8deg);
+}
+
+.closing-ornament--spark {
+  color: rgba(102, 75, 0, 0.82);
+  transform: translateY(-6px);
+}
+
+.closing-ornament--curve {
+  width: 58px;
+  height: 27px;
+  border-top: 2px solid rgba(125, 95, 0, 0.55);
+  border-radius: 50% 50% 0 0;
+  transform: rotate(-24deg);
+}
+
+.closing-ornament--sun-small {
+  font-size: 1.25rem;
+  transform: translateY(8px);
+}
+
+.closing-ornament--spark-small {
+  font-size: 1.05rem;
+  transform: translateY(-10px);
 }
 
 .closing-logo {
@@ -1396,27 +1446,13 @@ body.reveal-enabled [data-reveal].is-visible {
   }
 
   .hero-collage {
-    min-height: 480px;
-    margin-top: 8px;
-  }
-
-  .paper-photo--hero {
-    top: 10px;
-    right: 4%;
-    width: 70%;
-    height: 410px;
-  }
-
-  .paper-photo--group {
-    top: 35px;
-    left: -2%;
-    width: 54%;
-  }
-
-  .paper-photo--poster {
-    bottom: 6px;
-    left: 2%;
-    width: 52%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 24px 12px;
+    min-height: 0;
+    margin-top: 24px;
+    padding-top: 50px;
   }
 
   .scribble--sun {
@@ -1425,15 +1461,57 @@ body.reveal-enabled [data-reveal].is-visible {
     font-size: 6rem;
   }
 
+  .paper-photo {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
+
+  .paper-photo figcaption {
+    white-space: normal;
+  }
+
+  .paper-photo--hero {
+    grid-column: 1 / -1;
+    width: min(88%, 355px);
+    height: clamp(370px, 100vw, 460px);
+    margin-inline: auto;
+    transform: rotate(2deg);
+  }
+
+  .paper-photo--group {
+    grid-column: 1;
+    transform: rotate(-4deg);
+  }
+
+  .paper-photo--poster {
+    grid-column: 2;
+    transform: rotate(4deg);
+  }
+
+  .label--date,
+  .label--love {
+    position: relative;
+    inset: auto;
+    align-self: center;
+    margin-top: 0;
+  }
+
   .label--date {
-    right: -2px;
-    bottom: 40px;
-    font-size: 0.67rem;
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: end;
   }
 
   .label--love {
-    top: 47%;
-    left: -3px;
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .collage-label {
     font-size: 0.67rem;
   }
 
@@ -1590,13 +1668,6 @@ body.reveal-enabled [data-reveal].is-visible {
     grid-row: span 2;
   }
 
-  .gallery-caption {
-    right: 8px;
-    bottom: 8px;
-    left: 8px;
-    font-size: 0.72rem;
-  }
-
   .closing {
     min-height: 580px;
     padding: 80px 18px 140px;
@@ -1608,6 +1679,16 @@ body.reveal-enabled [data-reveal].is-visible {
 
   .closing-signature {
     font-size: 1.55rem;
+  }
+
+  .closing-ornaments {
+    right: 11%;
+    bottom: 47px;
+    left: 9%;
+  }
+
+  .closing-ornament--curve {
+    display: none;
   }
 
   .closing-logo {
