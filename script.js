@@ -149,7 +149,7 @@ function createGallerySwiper(swiperElement, reverseDirection) {
       : {
           delay: 0,
           disableOnInteraction: false,
-          pauseOnMouseEnter: true,
+          pauseOnMouseEnter: false,
           reverseDirection,
           waitForTransition: false,
         },
@@ -184,14 +184,33 @@ function initializeGallery() {
   const didBuildAllSwipers = gallerySwipers.every((swiperElement, index) => buildGallerySwiper(swiperElement, trackItems[index]));
   if (!didBuildAllSwipers) return;
 
+  let expanded = false;
   const gallerySwiperInstances = gallerySwipers.map((swiperElement, index) =>
     createGallerySwiper(swiperElement, index === 1),
   );
 
+  function resumeGallerySwiper(swiper) {
+    if (expanded || !swiper.autoplay) return;
+    if (swiper.autoplay.paused) {
+      swiper.autoplay.resume();
+    } else if (!swiper.autoplay.running) {
+      swiper.autoplay.start();
+    }
+  }
+
+  gallerySwiperInstances.forEach((swiper) => {
+    swiper.on('touchEnd', () => resumeGallerySwiper(swiper));
+    swiper.on('touchCancel', () => resumeGallerySwiper(swiper));
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      gallerySwiperInstances.forEach(resumeGallerySwiper);
+    }
+  });
+
   galleryPreview.hidden = false;
   gallery.classList.add('gallery--interactive');
-
-  let expanded = false;
 
   function setGalleryExpanded(nextExpanded) {
     expanded = nextExpanded;
