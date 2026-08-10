@@ -134,8 +134,6 @@ function buildGallerySwiper(swiperElement, galleryItems) {
 }
 
 function createGallerySwiper(swiperElement, reverseDirection) {
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
   return new Swiper(swiperElement, {
     loop: true,
     loopAdditionalSlides: 4,
@@ -144,15 +142,13 @@ function createGallerySwiper(swiperElement, reverseDirection) {
     speed: 9000,
     allowTouchMove: true,
     touchStartPreventDefault: false,
-    autoplay: reduceMotion
-      ? false
-      : {
-          delay: 0,
-          disableOnInteraction: false,
-          pauseOnMouseEnter: false,
-          reverseDirection,
-          waitForTransition: false,
-        },
+    autoplay: {
+      delay: 0,
+      disableOnInteraction: false,
+      pauseOnMouseEnter: false,
+      reverseDirection,
+      waitForTransition: false,
+    },
     freeMode: {
       enabled: true,
       momentum: false,
@@ -208,6 +204,10 @@ function initializeGallery() {
       gallerySwiperInstances.forEach(resumeGallerySwiper);
     }
   });
+
+  window.setInterval(() => {
+    gallerySwiperInstances.forEach(resumeGallerySwiper);
+  }, 250);
 
   galleryPreview.hidden = false;
   gallery.classList.add('gallery--interactive');
