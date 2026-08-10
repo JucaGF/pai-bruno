@@ -10,7 +10,8 @@
     />
     <title>Pai Bruno · Yellowar</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="gallery-loop.js" defer></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js" defer></script>
     <script src="script.js" defer></script>
   </head>
   <body>
@@ -154,9 +155,13 @@
           </div>
         </div>
 
-        <div class="gallery-preview" data-gallery-preview role="region" tabindex="0" aria-label="Prévia animada das memórias Yellowar. Deslize para navegar pelas fotos.">
-          <div class="gallery-track gallery-track--forward" data-gallery-track="forward"></div>
-          <div class="gallery-track gallery-track--reverse" data-gallery-track="reverse"></div>
+        <div class="gallery-preview" data-gallery-preview role="region" aria-label="Prévia animada das memórias Yellowar. Deslize para navegar pelas fotos." hidden>
+          <div class="gallery-swiper swiper" data-gallery-swiper="forward" aria-label="Fotos passando da direita para a esquerda.">
+            <div class="swiper-wrapper"></div>
+          </div>
+          <div class="gallery-swiper swiper" data-gallery-swiper="reverse" aria-label="Fotos passando da esquerda para a direita.">
+            <div class="swiper-wrapper"></div>
+          </div>
         </div>
         <button class="gallery-toggle" type="button" data-gallery-toggle aria-expanded="false" aria-controls="gallery-grid">
           <span data-gallery-toggle-label>Ver todas as fotos</span>

@@ -13,8 +13,7 @@ const galleryPreview = document.querySelector('[data-gallery-preview]');
 const galleryGrid = document.querySelector('[data-gallery-grid]');
 const galleryToggle = document.querySelector('[data-gallery-toggle]');
 const galleryToggleLabel = document.querySelector('[data-gallery-toggle-label]');
-const galleryTracks = [...document.querySelectorAll('[data-gallery-track]')];
-const { getInitialLoopOffset, getRepeatWidth, wrapLoopOffset } = window.galleryLoop;
+const gallerySwipers = [...document.querySelectorAll('[data-gallery-swiper]')];
 
 document.body.classList.add('reveal-enabled');
 
@@ -107,187 +106,90 @@ if ('IntersectionObserver' in window) {
   revealItems.forEach((item) => item.classList.add('is-visible'));
 }
 
-function createGalleryTrackSet(galleryItems) {
-  const set = document.createElement('span');
-  set.className = 'gallery-track-set';
-  set.setAttribute('aria-hidden', 'true');
+function createGallerySlide(galleryItem) {
+  const sourceImage = galleryItem.querySelector('img');
+  if (!sourceImage) return null;
 
-  galleryItems.forEach((galleryItem) => {
-    const sourceImage = galleryItem.querySelector('img');
-    if (!sourceImage) return;
+  const slide = document.createElement('div');
+  slide.className = 'swiper-slide gallery-marquee-item';
+  slide.setAttribute('aria-hidden', 'true');
 
-    const card = document.createElement('span');
-    card.className = 'gallery-marquee-item';
-    card.setAttribute('aria-hidden', 'true');
+  const image = document.createElement('img');
+  image.src = sourceImage.getAttribute('src') || sourceImage.src;
+  image.alt = '';
+  image.decoding = 'async';
+  slide.append(image);
 
-    const image = document.createElement('img');
-    image.src = sourceImage.getAttribute('src') || sourceImage.src;
-    image.alt = '';
-    image.decoding = 'async';
-    card.append(image);
-    set.append(card);
-  });
-
-  return set;
+  return slide;
 }
 
-function buildGalleryTrack(track, galleryItems) {
-  track.replaceChildren(
-    createGalleryTrackSet(galleryItems),
-    createGalleryTrackSet(galleryItems),
-    createGalleryTrackSet(galleryItems),
-  );
+function buildGallerySwiper(swiperElement, galleryItems) {
+  const wrapper = swiperElement.querySelector('.swiper-wrapper');
+  if (!wrapper) return false;
+
+  const slides = galleryItems.map(createGallerySlide).filter(Boolean);
+  if (slides.length < 2) return false;
+  wrapper.replaceChildren(...slides);
+  return true;
 }
 
-function createGalleryLoop(preview, tracks) {
-  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-  const trackStates = tracks.map((track, index) => ({
-    track,
-    direction: track.classList.contains('gallery-track--reverse') ? 1 : -1,
-    speed: index === 0 ? 14 : 11,
-    offset: 0,
-    repeatWidth: 0,
-    hasMeasured: false,
-  }));
-  let animationFrame = null;
-  let lastTimestamp = null;
-  let paused = false;
-  let pointerId = null;
-  let pointerStartX = 0;
-  let pointerStartY = 0;
-  let pointerStartOffsets = [];
-  let isDragging = false;
+function createGallerySwiper(swiperElement, reverseDirection) {
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-  function renderTrack(state) {
-    state.track.style.setProperty('--gallery-offset', `${state.offset}px`);
-  }
-
-  function measureTracks() {
-    trackStates.forEach((state) => {
-      const firstSet = state.track.querySelector('.gallery-track-set');
-      const repeatWidth = getRepeatWidth(firstSet?.getBoundingClientRect().width);
-      if (repeatWidth <= 0) return;
-
-      state.repeatWidth = repeatWidth;
-      state.offset = state.hasMeasured
-        ? wrapLoopOffset(state.offset, repeatWidth)
-        : getInitialLoopOffset(state.direction, repeatWidth);
-      state.hasMeasured = true;
-      renderTrack(state);
-    });
-  }
-
-  function tick(timestamp) {
-    const elapsed = lastTimestamp === null ? 0 : Math.min((timestamp - lastTimestamp) / 1000, 0.1);
-    lastTimestamp = timestamp;
-
-    if (!paused && !isDragging && !reducedMotion?.matches) {
-      trackStates.forEach((state) => {
-        if (!state.repeatWidth) return;
-        state.offset = wrapLoopOffset(state.offset + state.direction * state.speed * elapsed, state.repeatWidth);
-        renderTrack(state);
-      });
-    }
-
-    animationFrame = window.requestAnimationFrame(tick);
-  }
-
-  function finishPointer(event) {
-    if (pointerId !== event.pointerId) return;
-
-    if (preview.hasPointerCapture?.(pointerId)) {
-      preview.releasePointerCapture(pointerId);
-    }
-
-    pointerId = null;
-    isDragging = false;
-    preview.classList.remove('is-dragging');
-    lastTimestamp = null;
-  }
-
-  preview.addEventListener('pointerdown', (event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-
-    pointerId = event.pointerId;
-    pointerStartX = event.clientX;
-    pointerStartY = event.clientY;
-    pointerStartOffsets = trackStates.map((state) => state.offset);
-  });
-
-  preview.addEventListener('pointermove', (event) => {
-    if (pointerId !== event.pointerId) return;
-
-    const deltaX = event.clientX - pointerStartX;
-    const deltaY = event.clientY - pointerStartY;
-
-    if (!isDragging) {
-      if (Math.abs(deltaX) < 8) return;
-      if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        pointerId = null;
-        return;
-      }
-
-      isDragging = true;
-      preview.classList.add('is-dragging');
-      preview.setPointerCapture?.(pointerId);
-    }
-
-    event.preventDefault();
-    trackStates.forEach((state, index) => {
-      if (!state.repeatWidth) return;
-      state.offset = wrapLoopOffset(pointerStartOffsets[index] + deltaX, state.repeatWidth);
-      renderTrack(state);
-    });
-  });
-
-  preview.addEventListener('pointerup', finishPointer);
-  preview.addEventListener('pointercancel', finishPointer);
-  preview.addEventListener('lostpointercapture', finishPointer);
-  document.addEventListener('visibilitychange', () => {
-    lastTimestamp = null;
-  });
-
-  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(measureTracks) : null;
-  resizeObserver?.observe(preview);
-  window.addEventListener('resize', measureTracks);
-  reducedMotion?.addEventListener?.('change', () => {
-    lastTimestamp = null;
-  });
-
-  window.requestAnimationFrame(() => {
-    measureTracks();
-    animationFrame = window.requestAnimationFrame(tick);
-  });
-
-  return {
-    setPaused(nextPaused) {
-      paused = nextPaused;
-      lastTimestamp = null;
+  return new Swiper(swiperElement, {
+    loop: true,
+    loopAdditionalSlides: 4,
+    slidesPerView: 'auto',
+    spaceBetween: 14,
+    speed: 9000,
+    allowTouchMove: true,
+    touchStartPreventDefault: false,
+    autoplay: reduceMotion
+      ? false
+      : {
+          delay: 0,
+          disableOnInteraction: false,
+          pauseOnMouseEnter: true,
+          reverseDirection,
+          waitForTransition: false,
+        },
+    freeMode: {
+      enabled: true,
+      momentum: false,
     },
-    destroy() {
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', measureTracks);
-    },
-  };
+  });
 }
 
 function initializeGallery() {
-  if (!gallery || !galleryPreview || !galleryGrid || !galleryToggle || !galleryToggleLabel || galleryTracks.length !== 2) {
+  if (
+    !gallery ||
+    !galleryPreview ||
+    !galleryGrid ||
+    !galleryToggle ||
+    !galleryToggleLabel ||
+    gallerySwipers.length !== 2 ||
+    typeof window.Swiper !== 'function'
+  ) {
     return;
   }
 
   const galleryItems = [...galleryGrid.querySelectorAll('[data-gallery-image]')];
   if (!galleryItems.length) return;
 
-  const previewItems = galleryItems.slice(0, 16);
+  const previewItems = galleryItems.slice(0, 32);
   const trackItems = [
     previewItems.filter((_, index) => index % 2 === 0),
     previewItems.filter((_, index) => index % 2 === 1),
   ];
-  galleryTracks.forEach((track, index) => buildGalleryTrack(track, trackItems[index]));
+  const didBuildAllSwipers = gallerySwipers.every((swiperElement, index) => buildGallerySwiper(swiperElement, trackItems[index]));
+  if (!didBuildAllSwipers) return;
+
+  const gallerySwiperInstances = gallerySwipers.map((swiperElement, index) =>
+    createGallerySwiper(swiperElement, index === 1),
+  );
+
+  galleryPreview.hidden = false;
   gallery.classList.add('gallery--interactive');
-  const galleryLoop = createGalleryLoop(galleryPreview, galleryTracks);
 
   let expanded = false;
 
@@ -298,7 +200,11 @@ function initializeGallery() {
     galleryGrid.setAttribute('aria-hidden', String(!expanded));
     galleryGrid.inert = !expanded;
     galleryToggleLabel.textContent = expanded ? 'Recolher galeria' : 'Ver todas as fotos';
-    galleryLoop.setPaused(expanded);
+    gallerySwiperInstances.forEach((swiper) => {
+      if (!swiper.autoplay) return;
+      if (expanded) swiper.autoplay.stop();
+      else swiper.autoplay.start();
+    });
 
     if (expanded) {
       galleryItems.forEach((item) => item.classList.add('is-visible'));
