@@ -14,6 +14,7 @@ const galleryGrid = document.querySelector('[data-gallery-grid]');
 const galleryToggle = document.querySelector('[data-gallery-toggle]');
 const galleryToggleLabel = document.querySelector('[data-gallery-toggle-label]');
 const galleryTracks = [...document.querySelectorAll('[data-gallery-track]')];
+const { wrapLoopOffset } = window.galleryLoop;
 
 document.body.classList.add('reveal-enabled');
 
@@ -106,10 +107,12 @@ if ('IntersectionObserver' in window) {
   revealItems.forEach((item) => item.classList.add('is-visible'));
 }
 
-function buildGalleryTrack(track, galleryItems) {
-  const cards = document.createDocumentFragment();
+function createGalleryTrackSet(galleryItems) {
+  const set = document.createElement('span');
+  set.className = 'gallery-track-set';
+  set.setAttribute('aria-hidden', 'true');
 
-  [...galleryItems, ...galleryItems].forEach((galleryItem) => {
+  galleryItems.forEach((galleryItem) => {
     const sourceImage = galleryItem.querySelector('img');
     if (!sourceImage) return;
 
@@ -122,69 +125,148 @@ function buildGalleryTrack(track, galleryItems) {
     image.alt = '';
     image.decoding = 'async';
     card.append(image);
-    cards.append(card);
+    set.append(card);
   });
 
-  track.replaceChildren(cards);
+  return set;
 }
 
-function enableGallerySwipe() {
-  let pointerId = null;
-  let startX = 0;
-  let startY = 0;
-  let committedOffset = 0;
-  let isHorizontalGesture = false;
+function buildGalleryTrack(track, galleryItems) {
+  track.replaceChildren(
+    createGalleryTrackSet(galleryItems),
+    createGalleryTrackSet(galleryItems),
+    createGalleryTrackSet(galleryItems),
+  );
+}
 
-  function setTrackOffset(offset) {
-    galleryTracks.forEach((track) => {
-      track.style.setProperty('--gallery-drag-offset', `${offset}px`);
+function createGalleryLoop(preview, tracks) {
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const trackStates = tracks.map((track, index) => ({
+    track,
+    direction: track.classList.contains('gallery-track--reverse') ? 1 : -1,
+    speed: index === 0 ? 14 : 11,
+    offset: 0,
+    repeatWidth: 0,
+  }));
+  let animationFrame = null;
+  let lastTimestamp = null;
+  let paused = false;
+  let pointerId = null;
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let pointerStartOffsets = [];
+  let isDragging = false;
+
+  function renderTrack(state) {
+    state.track.style.setProperty('--gallery-offset', `${state.offset}px`);
+  }
+
+  function measureTracks() {
+    trackStates.forEach((state) => {
+      const firstSet = state.track.querySelector('.gallery-track-set');
+      const secondSet = firstSet?.nextElementSibling;
+      const repeatWidth = secondSet ? secondSet.offsetLeft - firstSet.offsetLeft : 0;
+      if (repeatWidth <= 0) return;
+
+      state.repeatWidth = repeatWidth;
+      state.offset = wrapLoopOffset(state.offset, repeatWidth);
+      renderTrack(state);
     });
+  }
+
+  function tick(timestamp) {
+    const elapsed = lastTimestamp === null ? 0 : Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+    lastTimestamp = timestamp;
+
+    if (!paused && !isDragging && !reducedMotion?.matches) {
+      trackStates.forEach((state) => {
+        if (!state.repeatWidth) return;
+        state.offset = wrapLoopOffset(state.offset + state.direction * state.speed * elapsed, state.repeatWidth);
+        renderTrack(state);
+      });
+    }
+
+    animationFrame = window.requestAnimationFrame(tick);
   }
 
   function finishPointer(event) {
     if (pointerId !== event.pointerId) return;
 
-    if (isHorizontalGesture) {
-      committedOffset += event.clientX - startX;
-      setTrackOffset(committedOffset);
+    if (preview.hasPointerCapture?.(pointerId)) {
+      preview.releasePointerCapture(pointerId);
     }
 
-    galleryPreview.classList.remove('is-dragging');
-    if (galleryPreview.hasPointerCapture?.(pointerId)) {
-      galleryPreview.releasePointerCapture(pointerId);
-    }
     pointerId = null;
-    isHorizontalGesture = false;
+    isDragging = false;
+    preview.classList.remove('is-dragging');
+    lastTimestamp = null;
   }
 
-  galleryPreview.addEventListener('pointerdown', (event) => {
+  preview.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
 
     pointerId = event.pointerId;
-    startX = event.clientX;
-    startY = event.clientY;
-    isHorizontalGesture = false;
-    galleryPreview.setPointerCapture?.(pointerId);
+    pointerStartX = event.clientX;
+    pointerStartY = event.clientY;
+    pointerStartOffsets = trackStates.map((state) => state.offset);
   });
 
-  galleryPreview.addEventListener('pointermove', (event) => {
+  preview.addEventListener('pointermove', (event) => {
     if (pointerId !== event.pointerId) return;
 
-    const deltaX = event.clientX - startX;
-    const deltaY = event.clientY - startY;
+    const deltaX = event.clientX - pointerStartX;
+    const deltaY = event.clientY - pointerStartY;
 
-    if (!isHorizontalGesture) {
-      if (Math.abs(deltaY) > Math.abs(deltaX) || Math.abs(deltaX) < 8) return;
-      isHorizontalGesture = true;
-      galleryPreview.classList.add('is-dragging');
+    if (!isDragging) {
+      if (Math.abs(deltaX) < 8) return;
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        pointerId = null;
+        return;
+      }
+
+      isDragging = true;
+      preview.classList.add('is-dragging');
+      preview.setPointerCapture?.(pointerId);
     }
 
     event.preventDefault();
-    setTrackOffset(committedOffset + deltaX);
+    trackStates.forEach((state, index) => {
+      if (!state.repeatWidth) return;
+      state.offset = wrapLoopOffset(pointerStartOffsets[index] + deltaX, state.repeatWidth);
+      renderTrack(state);
+    });
   });
 
-  galleryPreview.addEventListener('pointerup', finishPointer);
-  galleryPreview.addEventListener('pointercancel', finishPointer);
+  preview.addEventListener('pointerup', finishPointer);
+  preview.addEventListener('pointercancel', finishPointer);
+  preview.addEventListener('lostpointercapture', finishPointer);
+  document.addEventListener('visibilitychange', () => {
+    lastTimestamp = null;
+  });
+
+  const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(measureTracks) : null;
+  resizeObserver?.observe(preview);
+  window.addEventListener('resize', measureTracks);
+  reducedMotion?.addEventListener?.('change', () => {
+    lastTimestamp = null;
+  });
+
+  window.requestAnimationFrame(() => {
+    measureTracks();
+    animationFrame = window.requestAnimationFrame(tick);
+  });
+
+  return {
+    setPaused(nextPaused) {
+      paused = nextPaused;
+      lastTimestamp = null;
+    },
+    destroy() {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', measureTracks);
+    },
+  };
 }
 
 function initializeGallery() {
@@ -195,11 +277,14 @@ function initializeGallery() {
   const galleryItems = [...galleryGrid.querySelectorAll('[data-gallery-image]')];
   if (!galleryItems.length) return;
 
-  const previewItems = galleryItems.slice(0, 8);
-  galleryTracks.forEach((track) => buildGalleryTrack(track, previewItems));
+  const previewItems = galleryItems.slice(0, 16);
+  const trackItems = [
+    previewItems.filter((_, index) => index % 2 === 0),
+    previewItems.filter((_, index) => index % 2 === 1),
+  ];
+  galleryTracks.forEach((track, index) => buildGalleryTrack(track, trackItems[index]));
   gallery.classList.add('gallery--interactive');
-  const isMobileViewport = window.matchMedia?.('(max-width: 700px)').matches;
-  if (!isMobileViewport) enableGallerySwipe();
+  const galleryLoop = createGalleryLoop(galleryPreview, galleryTracks);
 
   let expanded = false;
 
@@ -210,6 +295,7 @@ function initializeGallery() {
     galleryGrid.setAttribute('aria-hidden', String(!expanded));
     galleryGrid.inert = !expanded;
     galleryToggleLabel.textContent = expanded ? 'Recolher galeria' : 'Ver todas as fotos';
+    galleryLoop.setPaused(expanded);
 
     if (expanded) {
       galleryItems.forEach((item) => item.classList.add('is-visible'));
