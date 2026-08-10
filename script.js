@@ -195,7 +195,8 @@ function initializeGallery() {
   const galleryItems = [...galleryGrid.querySelectorAll('[data-gallery-image]')];
   if (!galleryItems.length) return;
 
-  galleryTracks.forEach((track) => buildGalleryTrack(track, galleryItems));
+  const previewItems = galleryItems.slice(0, 8);
+  galleryTracks.forEach((track) => buildGalleryTrack(track, previewItems));
   gallery.classList.add('gallery--interactive');
   enableGallerySwipe();
 

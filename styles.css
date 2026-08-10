@@ -1628,6 +1628,11 @@ body.reveal-enabled [data-reveal].is-visible {
 
   .gallery-track {
     gap: 9px;
+    animation-duration: 240s;
+  }
+
+  .gallery-track--reverse {
+    animation-duration: 280s;
   }
 
   .gallery-marquee-item {
