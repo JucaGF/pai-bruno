@@ -14,7 +14,7 @@ const galleryGrid = document.querySelector('[data-gallery-grid]');
 const galleryToggle = document.querySelector('[data-gallery-toggle]');
 const galleryToggleLabel = document.querySelector('[data-gallery-toggle-label]');
 const galleryTracks = [...document.querySelectorAll('[data-gallery-track]')];
-const { wrapLoopOffset } = window.galleryLoop;
+const { getInitialLoopOffset, getRepeatWidth, wrapLoopOffset } = window.galleryLoop;
 
 document.body.classList.add('reveal-enabled');
 
@@ -147,6 +147,7 @@ function createGalleryLoop(preview, tracks) {
     speed: index === 0 ? 14 : 11,
     offset: 0,
     repeatWidth: 0,
+    hasMeasured: false,
   }));
   let animationFrame = null;
   let lastTimestamp = null;
@@ -164,12 +165,14 @@ function createGalleryLoop(preview, tracks) {
   function measureTracks() {
     trackStates.forEach((state) => {
       const firstSet = state.track.querySelector('.gallery-track-set');
-      const secondSet = firstSet?.nextElementSibling;
-      const repeatWidth = secondSet ? secondSet.offsetLeft - firstSet.offsetLeft : 0;
+      const repeatWidth = getRepeatWidth(firstSet?.getBoundingClientRect().width);
       if (repeatWidth <= 0) return;
 
       state.repeatWidth = repeatWidth;
-      state.offset = wrapLoopOffset(state.offset, repeatWidth);
+      state.offset = state.hasMeasured
+        ? wrapLoopOffset(state.offset, repeatWidth)
+        : getInitialLoopOffset(state.direction, repeatWidth);
+      state.hasMeasured = true;
       renderTrack(state);
     });
   }
